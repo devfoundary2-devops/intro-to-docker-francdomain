@@ -2,16 +2,60 @@ services:
   app:
     build: .
     ports:
-      - "8080:8080"
-    depends_on:
-      - db
-  db:
-    image: postgres:17-alpine
+      - "8000:8000"
     environment:
-      POSTGRES_USER: demo
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: demo
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=db
+      - POSTGRES_USER=fnctech
+      - POSTGRES_PASSWORD=password1357
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
     volumes:
-      - /Users/david/tech4dev/v2/bootcamp/docker/data:/var/lib/postgresql/data
-# volumes:
-#   db_data:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=db
+      - POSTGRES_USER=fnctech
+      - POSTGRES_PASSWORD=password1357
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fnctech -d db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  redis_data:
+  db_data:
