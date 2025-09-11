@@ -330,7 +330,7 @@ jobs:
         test-name: Docker Compose Build Test
         command: |
           # Check if docker-compose configuration is valid
-          if ! docker-compose config > /dev/null 2>&1; then
+          if ! docker compose config > /dev/null 2>&1; then
             echo "FAIL: docker-compose.yml has invalid configuration"
             exit 1
           fi
